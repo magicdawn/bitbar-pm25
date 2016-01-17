@@ -57,8 +57,8 @@ const queryPm25China = async function() {
   // 概览
   ret.overview = {
     city: $('.city_name').text(),
-    AQI: $('.citydata_banner_opacity > .cbo_left > .cbol_aqi > .cbol_aqi_num').text(),
-    'PM2.5': $('div.citydata_banner_opacity > div.cbo_left > div.cbol_nongdu > a.cbol_nongdu_num > span.cbol_nongdu_num_1').text(),
+    aqi: $('.citydata_banner_opacity > .cbo_left > .cbol_aqi > .cbol_aqi_num').text(),
+    pm25: $('div.citydata_banner_opacity > div.cbo_left > div.cbol_nongdu > a.cbol_nongdu_num > span.cbol_nongdu_num_1').text(),
     status: $('div.citydata_banner_opacity > div.cbo_right > div.cbor_gauge > span').text()
   };
 
@@ -66,10 +66,10 @@ const queryPm25China = async function() {
   ret.detail = $('.pj_area_data_details').eq(0).children('li')
     .map(function() {
       return {
-        'station': $(this).find('.pjadt_location').text(),
-        'AQI': $(this).find('.pjadt_aqi').text(),
-        'PM2.5': $(this).find('.pjadt_pm25').text().replace(/^(\d+)[\s\S]*?$/, '$1'),
-        'status': $(this).find('.pjadt_quality').text()
+        station: $(this).find('.pjadt_location').text(),
+        api: $(this).find('.pjadt_aqi').text(),
+        pm25: $(this).find('.pjadt_pm25').text().replace(/^(\d+)[\s\S]*?$/, '$1'),
+        status: $(this).find('.pjadt_quality').text()
       };
     })
     .get();
@@ -109,11 +109,11 @@ const queryPm25China = async function() {
   });
 
   // city
-  table.push([overview.city, overview.status, overview.AQI, overview['PM2.5']]);
+  table.push([overview.city, overview.status, overview.aqi, overview.pm25]);
 
   // detail
   for (let item of detail) {
-    table.push([item.station, item.status, item.AQI, item['PM2.5']]);
+    table.push([item.station, item.status, item.aqi, item.pm25]);
   }
   console.log(table.toString());
 })().catch(e => console.error(e.stack || e));
