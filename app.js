@@ -10,7 +10,7 @@ const Request = request.Request;
 Request.prototype.endAsync = Promise.promisify(Request.prototype.end);
 const cheerio = require('cheerio');
 const debug = require('debug')('pm25:app');
-const Table = require('cli-table');
+const _ = require('lodash');
 
 /**
  * consts
@@ -56,7 +56,7 @@ const queryPm25China = async function() {
 
   // 概览
   ret.overview = {
-    city: $('.city_name').text(),
+    station: $('.city_name').text(),
     aqi: $('.citydata_banner_opacity > .cbo_left > .cbol_aqi > .cbol_aqi_num').text(),
     pm25: $('div.citydata_banner_opacity > div.cbo_left > div.cbol_nongdu > a.cbol_nongdu_num > span.cbol_nongdu_num_1').text(),
     status: $('div.citydata_banner_opacity > div.cbo_right > div.cbor_gauge > span').text()
@@ -67,7 +67,7 @@ const queryPm25China = async function() {
     .map(function() {
       return {
         station: $(this).find('.pjadt_location').text(),
-        api: $(this).find('.pjadt_aqi').text(),
+        aqi: $(this).find('.pjadt_aqi').text(),
         pm25: $(this).find('.pjadt_pm25').text().replace(/^(\d+)[\s\S]*?$/, '$1'),
         status: $(this).find('.pjadt_quality').text()
       };
@@ -85,35 +85,14 @@ const queryPm25China = async function() {
   const detail = res.detail;
 
   // overview
-  console.log(`${ overview.city } - ${ overview.status }`);
+  console.log(`${ overview.station } - ${ overview.status }`);
   console.log('---');
 
-  const table = new Table({
-    chars: {
-      'top': '',
-      'top-mid': '',
-      'top-left': '',
-      'top-right': '',
-      'bottom': '',
-      'bottom-mid': '',
-      'bottom-left': '',
-      'bottom-right': '',
-      'left': '',
-      'left-mid': '',
-      'mid': '',
-      'mid-mid': '',
-      'right': '',
-      'right-mid': '',
-      'middle': ' '
-    }
-  });
+  console.log(`${ overview.station } - ${ overview.status } - AQI:${ overview.aqi } - PM2.5:${ overview.pm25 }`);
+  console.log('---');
 
-  // city
-  table.push([overview.city, overview.status, overview.aqi, overview.pm25]);
-
-  // detail
+  // log
   for (let item of detail) {
-    table.push([item.station, item.status, item.aqi, item.pm25]);
+    console.log(`${ item.station } - ${ item.status } - AQI:${ item.aqi } - PM2.5:${ item.pm25 }`);
   }
-  console.log(table.toString());
 })().catch(e => console.error(e.stack || e));
