@@ -6,49 +6,33 @@
 
 global.Promise = require('bluebird');
 const request = require('superagent');
-const Request = request.Request;
-Request.prototype.endAsync = Promise.promisify(Request.prototype.end);
 const cheerio = require('cheerio');
 const debug = require('debug')('pm25:app');
 const _ = require('lodash');
+const co = require('co');
+
+/**
+ * Promise patch
+ */
+
+const Request = request.Request;
+Request.prototype.endAsync = Promise.promisify(Request.prototype.end);
 
 /**
  * consts
  */
 
-const apiToken = '5j1znBVAsnSf5xQyNQyq';
-const pm25ChinaUrl = 'http://www.pm25.com/city/beijing.html';
+const pm25ComUrl = 'http://www.pm25.com/city/beijing.html';
 
-const queryPm25In = async function() {
-  const list = await request
-    .get('http://www.pm25.in/api/querys/pm2_5.json')
-    .query({
-      city: 'beijing',
-      token: apiToken
-    })
-    .timeout(5000)
-    .endAsync()
-    .then(res => res.body);
-
-  // error
-  if (list.error) throw new Error(list.error);
-  if (!list || !list.length) throw new Error('获取数据失败!');
-
-  return {
-    overview: list.slice(-1), // 城市平均
-    detail: list.slice(0, -1) // 监测点详细
-  };
-};
-
-const getHtml = async function(url) {
-  return await request
+const getHtml = co.wrap(function*(url) {
+  return yield request
     .get(url)
     .endAsync()
     .then(res => res.text);
-};
+});
 
-const queryPm25China = async function() {
-  const html = await getHtml(pm25ChinaUrl);
+const queryPm25China = co.wrap(function*() {
+  const html = yield getHtml(pm25ComUrl);
   const $ = cheerio.load(html, {
     normalizeWhitespace: true
   });
@@ -75,10 +59,10 @@ const queryPm25China = async function() {
     .get();
 
   return ret;
-};
+});
 
-(async function run() {
-  const res = await queryPm25China();
+co(function* run() {
+  const res = yield queryPm25China();
   debug('API query done');
 
   const overview = res.overview;
@@ -95,4 +79,4 @@ const queryPm25China = async function() {
   for (let item of detail) {
     console.log(`${ item.station } - ${ item.status } - AQI:${ item.aqi } - PM2.5:${ item.pm25 }`);
   }
-})().catch(e => console.error(e.stack || e));
+}).catch(e => console.error(e.stack || e));
